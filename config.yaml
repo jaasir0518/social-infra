@@ -1,0 +1,143 @@
+# Project Configuration
+project:
+  name: "social_infrastructure_prediction"
+  version: "0.1.0"
+  description: "ML system for predicting infrastructure maintenance needs"
+
+# Data Configuration
+data:
+  raw_data_path: "data/raw"
+  processed_data_path: "data/processed"
+  interim_data_path: "data/interim"
+  
+  # Data sources
+  sources:
+    bridges:
+      inventory: "data/raw/bridges/bridge_inventory.csv"
+      conditions: "data/raw/bridges/bridge_conditions.csv"
+      coordinates: "data/raw/bridges/bridge_coordinates.geojson"
+    
+    housing:
+      board_data: "data/raw/housing/housing_board_data.csv"
+      property_records: "data/raw/housing/property_records.csv"
+      locations: "data/raw/housing/housing_locations.geojson"
+    
+    roads:
+      network: "data/raw/roads/road_network.csv"
+      traffic: "data/raw/roads/traffic_data.csv"
+      conditions: "data/raw/roads/road_conditions.csv"
+    
+    utilities:
+      water: "data/raw/utilities/water_supply.csv"
+      electricity: "data/raw/utilities/electricity_grid.csv"
+      sewage: "data/raw/utilities/sewage_systems.csv"
+
+# Model Configuration
+models:
+  bridge_prediction:
+    algorithm: "xgboost"
+    hyperparameters:
+      max_depth: 6
+      learning_rate: 0.1
+      n_estimators: 100
+      subsample: 0.8
+    
+  housing_prediction:
+    algorithm: "random_forest"
+    hyperparameters:
+      n_estimators: 100
+      max_depth: 10
+      min_samples_split: 5
+      min_samples_leaf: 2
+    
+  road_prediction:
+    algorithm: "lightgbm"
+    hyperparameters:
+      num_leaves: 31
+      learning_rate: 0.05
+      feature_fraction: 0.9
+      bagging_fraction: 0.8
+    
+  ensemble:
+    method: "voting"
+    weights: [0.3, 0.3, 0.4]  # bridge, housing, road
+
+# Feature Engineering
+features:
+  spatial:
+    buffer_distance: 1000  # meters
+    grid_size: 500  # meters
+    
+  temporal:
+    window_size: 12  # months
+    seasonality: true
+    
+  infrastructure_metrics:
+    age_weight: 0.3
+    condition_weight: 0.4
+    usage_weight: 0.3
+
+# Training Configuration
+training:
+  test_size: 0.2
+  validation_size: 0.1
+  random_state: 42
+  
+  cross_validation:
+    folds: 5
+    stratified: true
+  
+  early_stopping:
+    patience: 10
+    min_delta: 0.001
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  cors_origins: ["*"]
+  
+  rate_limiting:
+    requests_per_minute: 60
+    burst_size: 10
+
+# Database Configuration
+database:
+  url: "postgresql://localhost:5432/social_infra"
+  echo: false
+  pool_size: 10
+  max_overflow: 20
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}"
+  rotation: "10 MB"
+  retention: "30 days"
+
+# Monitoring Configuration
+monitoring:
+  mlflow:
+    tracking_uri: "http://localhost:5000"
+    experiment_name: "social_infrastructure_prediction"
+  
+  wandb:
+    project: "social-infrastructure"
+    entity: "your-team"
+
+# Deployment Configuration
+deployment:
+  docker:
+    image_name: "social-infra-prediction"
+    tag: "latest"
+  
+  kubernetes:
+    namespace: "social-infra"
+    replicas: 3
+    
+  resources:
+    cpu_request: "500m"
+    memory_request: "1Gi"
+    cpu_limit: "2"
+    memory_limit: "4Gi"

@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Main API service
+  social-infra-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/social_infra
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./monitoring/logs:/app/monitoring/logs
+    restart: unless-stopped
+    networks:
+      - social-infra-network
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=social_infra
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deployment/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - social-infra-network
+
+  # Redis cache
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - social-infra-network
+
+  # MLflow tracking server
+  mlflow:
+    image: python:3.9-slim
+    command: >
+      bash -c "pip install mlflow psycopg2-binary &&
+               mlflow server --backend-store-uri postgresql://postgres:password@postgres:5432/mlflow
+               --default-artifact-root /mlflow/artifacts
+               --host 0.0.0.0 --port 5000"
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://postgres:password@postgres:5432/mlflow
+    depends_on:
+      - postgres
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    networks:
+      - social-infra-network
+
+  # Jupyter notebook server
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/notebooks
+      - ./data:/home/jovyan/data
+      - ./src:/home/jovyan/src
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    networks:
+      - social-infra-network
+
+  # Grafana for monitoring
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - social-infra-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  mlflow_artifacts:
+  grafana_data:
+
+networks:
+  social-infra-network:
+    driver: bridge

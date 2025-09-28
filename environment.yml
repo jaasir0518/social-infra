@@ -1,0 +1,39 @@
+name: social-infrastructure-prediction
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - numpy>=1.21.0
+  - pandas>=1.3.0
+  - scikit-learn>=1.0.0
+  - scipy>=1.7.0
+  - matplotlib>=3.5.0
+  - seaborn>=0.11.0
+  - jupyter
+  - jupyterlab
+  - geopandas
+  - folium
+  - plotly
+  - pip:
+    - tensorflow>=2.8.0
+    - torch>=1.11.0
+    - xgboost>=1.5.0
+    - lightgbm>=3.3.0
+    - fastapi>=0.75.0
+    - uvicorn>=0.17.0
+    - pydantic>=1.9.0
+    - mlflow>=1.24.0
+    - wandb>=0.12.0
+    - dash>=2.0.0
+    - polars>=0.15.0
+    - dask>=2022.1.0
+    - loguru>=0.6.0
+    - click>=8.0.0
+    - tqdm>=4.62.0
+    - pytest>=7.0.0
+    - black>=22.0.0
+    - isort>=5.10.0
+    - flake8>=4.0.0
+    - mypy>=0.931
